@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GDG Photos</title>
+    <link href="https://fonts.googleapis.com/css?family=Overpass:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+      * {
+        box-sizing: border-box;
+        outline: none;
+      }
+
+      html {
+        height: 100%;
+      }
+      
+      body {
+        margin: 0;
+        min-height: 100%;
+        font: 400 14px/1.5 'Overpass';
+        -webkit-font-smoothing: antialiased;
+	      -moz-osx-font-smoothing: grayscale;
+        color: #212121;
+      }
+
+      body.init {
+        visibility: hidden;
+      }
+
+      a {
+        color: #039be5;
+        cursor: pointer;
+        font-weight: bold;
+        text-decoration: none;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      input,
+      select,
+      textarea {
+        display: block;
+        width: 100%;
+        height: 40px;
+        border: 1px solid #efefef;
+        border-radius: 4px;
+        padding: 0 16px;
+        font: inherit;
+        color: inherit;
+      }
+
+      .loading {
+        position: relative;
+      }
+
+      .loading:after {
+        display: inline-block;
+        vertical-align: middle;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin .72s linear infinite;
+      }
+
+      .loading:before,
+      .loading:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+
+      .loading:before {
+        background: rgba(255,255,255,.8);
+        z-index: 9998;
+      }
+
+      .loading:after {
+        margin: auto;
+        z-index: 9999;
+        color: #039be5;
+        width: 32px;
+        height: 32px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: #fff;
+        background: #039be5;
+        font-weight: bold;
+        border-radius: 4px;
+        height: 40px;
+        line-height: 40px;
+        padding: 0 24px;
+      }
+
+      .ic {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        width: 48px;
+        height: 48px;
+        color: #fff;
+        background: #039be5;
+        border-radius: 50%;
+      }
+
+      .wrapper {
+        display: block;
+        width: 1170px;
+        margin: auto;
+        max-width: 100%;
+        padding: 0 24px;
+      }
+
+      .panel {
+        width: 400px;
+        padding: 16px 24px;
+        border: 1px solid #efefef;
+        border-radius: 4px;
+      }
+
+      .panel input,
+      .panel .btn {
+        margin-bottom: 16px;
+      }
+
+      #login {
+        display: flex;
+        height: 100vh;
+        text-align: center;
+        flex-flow: column nowrap;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body.connected #login,
+      body:not(.connected) #app,
+      #login.create-account .login,
+      #login:not(.create-account) .sign-up {
+        display: none;
+      }
+
+      #app {
+        display: flex;
+        flex-flow: column nowrap;
+      }
+
+      nav {
+        width: 300px;
+        flex-shrink: 0;
+      }
+
+      nav a {
+        display: flex;
+        align-items: center;
+        height: 64px;
+        padding: 0 24px;
+        color: inherit;
+      }
+
+      nav a.selected {
+        color: #039be5;
+        background: rgba(3, 154, 229, 0.08);
+      }
+
+      nav a span {
+        margin-left: 16px;
+        font-size: 18px;
+      }
+
+      main {
+        position: relative;
+        display: flex;
+        flex-grow: 1;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 64px;
+        flex-shrink: 0;
+        padding: 0 24px;
+        box-shadow: 5px 1px 5px 0 rgba(0,0,0,0.12);
+      }
+
+      header h1 {
+        margin: 0;
+      }
+
+      main .view {
+        position: relative;
+        padding: 0 24px;
+        flex-grow: 1;
+        height: calc(100vh - 64px);
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      main > .upload-btn {
+        position: fixed;
+        width: 64px;
+        height: 64px;
+        bottom: 16px;
+        right: 16px;
+      }
+
+      .view .back {
+        display: block;
+        margin-top: 16px;
+      }
+
+      #fileInput {
+        display: none !important;
+      }
+
+      #photos .photos-section {
+        display: flex;
+        flex-flow: row wrap;
+        margin-bottom: 48px;
+      }
+
+      #photos h3 {
+        text-transform: capitalize;
+      }
+
+      #photos .photo {
+        position: relative;
+        width: 19.5%;
+        padding-top: 19.5%;
+        margin: .25%;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        color: inherit;
+      }
+
+      #photos .photo.album {
+        margin-bottom: 48px;
+      }
+
+      #photos .photo .album-info {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        padding: 4px 16px;
+      }
+
+      #photos .photo .album-info .album-count {
+        font-weight: normal;
+        font-size: 11px;
+        opacity: .77;
+      }
+
+      #photos .photo img {
+        position: absolute;
+        opacity: 0;
+      }
+
+      .tabs {
+        display: flex;
+      }
+
+      .tabs .tab {
+        margin-right: 16px;
+      }
+
+      .tabs .tab.selected {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body class="init">
+
+    <div id="login">
+      <h1>GDG Photos</h1>
+      <div class="panel login">
+        <p>Login to upload your photos!</p>
+        <form onsubmit="login(event)">
+          <input id="loginEmail" placeholder="Email" type="email" required>
+          <input id="loginPassword" placeholder="Password" type="password" required>
+          <button class="btn" type="submit">Login</button>
+        </form>
+        <div><a onclick="toggleLogin()">I don't have an account</a></div>
+      </div>
+      <div class="panel sign-up">
+        <p>Create your account and start uploading!</p>
+        <form onsubmit="createAccount(event)">
+          <input id="signUpEmail" placeholder="Email" type="email" required>
+          <input id="signUpPassword" placeholder="Password" type="password" required>
+          <button class="btn" type="submit">Sign up</button>
+        </form>
+        <div><a onclick="toggleLogin()">I already have an account</a></div>
+      </div>
+      <p class="or">or</p>
+      <button class="btn login-google-btn" onclick="loginWithGoogle()">Login with Google</button>
+    </div>
+
+    <div id="app">
+      <header>
+        <h1>GDG Photos</h1>
+        <div class="user-actions">
+          <a onclick="logout()">Log out</a>
+        </div>
+      </header>
+      <main>
+        <nav>
+          <a class="selected" view="photos" onclick="updatePhotos('photos')">
+            <i class="material-icons">image</i>
+            <span>Photos</span>
+          </a>
+          <a view="albums" onclick="updatePhotos('albums')">
+            <i class="material-icons">photo_album</i>
+            <span>Albums</span>
+          </a>
+        </nav>
+        <div class="view">
+          <div id="photos"></div>
+        </div>
+        <button class="ic upload-btn" onclick="openUpload()">
+          <i class="material-icons">add_photo_alternate</i>
+        </button>
+        <input id="fileInput" type="file" multiple accept="image/*" onchange="uploadFiles()">
+      </main>
+    </div>
+
+    <script src="/__/firebase/5.8.6/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script src="/__/firebase/5.8.6/firebase-auth.js"></script>
+    <script src="/__/firebase/5.8.6/firebase-firestore.js"></script>
+    <script src="/__/firebase/5.8.6/firebase-storage.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script src="/__/firebase/init.js"></script>
+
+    <script>
+      const db = firebase.firestore
+      const auth = firebase.auth()
+      const storage = firebase.storage()
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+      const loginPanel = document.getElementById('login')
+      const loginEmail = document.getElementById('loginEmail')
+      const loginPassword = document.getElementById('loginPassword')
+      const signUpEmail = document.getElementById('signUpEmail')
+      const signUpPassword = document.getElementById('signUpPassword')
+      const fileInput = document.getElementById('fileInput')
+      const photosContainer = document.getElementById('photos')
+
+      let mode = 'photos'
+      let photos = []
+      let dates = {}
+      let albums = {}
+      let user, userRef, photosRef
+
+      function toggleLogin() {
+        loginPanel.classList.toggle('create-account')
+      }
+
+      function setLoading(loading) {
+        if(loading) document.body.classList.add('loading')
+        else document.body.classList.remove('loading')
+      }
+
+      function openUpload() {
+        fileInput.click()
+      }
+
+      function createAlbumElement(title, type, photos) {
+        const photo = photos[0]
+        return `<a onclick="updatePhotos('albums', '${type}', '${title}')" target="_blank" class="album photo" style="background-image: url(${photo.placeholder})">
+          <img width="1" height="1" src="${photo.thumbnail}" onload="event.target.parentNode.style.backgroundImage = 'url(${photo.thumbnail})'">
+          <div class="album-info">
+            <div class="album-title">${title}</div>
+            <div class="album-count">${photos.length} photo${photos.length > 1 ? 's' : ''}</div>
+          </div>
+        </a>`
+      }
+
+      function createPhotoElement(photo, title) {
+        return `<a href="${photo.url}" target="_blank" class="photo" style="background-image: url(${photo.placeholder})">
+          <img width="1" height="1" src="${photo.thumbnail}" onload="event.target.parentNode.style.backgroundImage = 'url(${photo.thumbnail})'">
+          ${title ? `<div class="photo-title">${title}</div>` : ''}
+        </a>`
+      }
+
+      function getPhotos(results) {
+        photos = results.docs.map(doc => doc.data())
+        dates = photos.reduce((list, photo) => {
+          const date = photo.created_at.toDate()
+          const dateString = `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`
+          if(!list[dateString]) list[dateString] = {}
+          const location = photo.location ? `${photo.location.city ? photo.location.city.long_name + ', ' : ''}${photo.location.country ? photo.location.country.long_name : ''}` : 'Unknown location'
+          if(!list[dateString][location]) list[dateString][location] = []
+          list[dateString][location].push(photo)
+          return list
+        }, {})
+        albums.labels = photos.reduce((list, photo) => {
+          if(photo.labels) {
+            photo.labels.map(label => {
+              if(!list[label]) list[label] = []
+              list[label].push(photo)
+            })
+          }
+          return list
+        }, {})
+        updatePhotos(mode)
+      }
+
+      function updatePhotos(view, type, album) {
+        mode = view
+        document.querySelectorAll('nav > a').forEach(link => {
+          if(link.getAttribute('view') === view) link.classList.add('selected')
+          else link.classList.remove('selected')
+        })
+        if(view === 'photos') {
+          photosContainer.innerHTML = Object.keys(dates).reduce((html, key) => {
+            const date = dates[key]
+            html += `<h3>${key}</h3>`
+            return html += Object.keys(date).map(location => `<h4>${location}</h4><div class="photos-section">${date[location].map(photo => createPhotoElement(photo)).join('')}</div>`).join('')
+          }, '')
+        }
+        else if(view === 'albums') {
+          if(type && album) {
+            photosContainer.innerHTML = `<a class="back" onclick="updatePhotos('albums')">Back to albums</a><h3>${album}</h3><div class="photos-section">${albums[type][album].map(photo => createPhotoElement(photo)).join('')}</div>`
+          }
+          else {
+            photosContainer.innerHTML = Object.keys(albums).reduce((html, key) => {
+              const album = albums[key]
+              html += `<h3>${key}</h3>`
+              return html += `<div class="photos-section">${Object.keys(album).sort((a, b) => album[b].length - album[a].length).map(title => createAlbumElement(title, key, album[title])).join('')}</div>`
+            }, '')
+          }
+        }
+        else photosContainer.innerHTML = photos.reduce((html, photo) => html + createPhotoElement(photo), '')
+      }
+
+      /* Code goes here */
+    </script>
+  </body>
+</html>
